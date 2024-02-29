@@ -78,8 +78,23 @@ impl<T: Copy + Default> RingBuffer<T> {
 impl RingBuffer<f32> {
     // Return the value at at an offset from the current read index.
     // To handle fractional offsets, linearly interpolate between adjacent values. 
-    pub fn get_frac(&self, offset: f32) -> f32 {
-        todo!("implement")
+    pub fn get_frac(&self, offset: f32) -> f32 {  // 0.5
+        let currFloor = self.tail as f32 + offset.floor();      // 0.0
+        let currCeil = self.tail as f32 + offset.ceil();        // 1.0
+        //println!("floor: {}, ceil: {}", currFloor, currCeil);
+
+        // ADD EXCEPTION FOR IF FLOOR AND CEIL ARE SAME
+
+        let left =  self.buffer[(currFloor as usize) % self.capacity()];            // 1.0
+        let right = self.buffer[(currCeil as usize)  % self.capacity()];            // 2.0
+        //println!("left: {}, right: {}", left, right);
+
+        let leftPercent  = 1.0 - (offset - offset.floor());     // .5
+        let rightPercent = 0.0 + (offset - offset.floor());     // .5
+        //println!("leftPercent: {}, rightPercent: {}", leftPercent, rightPercent);
+
+        let output = left * leftPercent + right * rightPercent; // 1.5
+        return output;
     }
 }
 
@@ -196,4 +211,26 @@ mod tests {
 
         // NOTE: Negative indices are also weird, but we can't even pass them due to type checking!
     }
+
+    #[test]
+    fn test_ringbuffer_f32() {
+        let capacity = 5;
+        let mut ring_buffer = RingBuffer::<f32>::new(capacity);
+        ring_buffer.push(1.0);
+        ring_buffer.push(2.0);    
+        let x = ring_buffer.get_frac(0.5);
+        //println!("x: {}", x);
+        assert_eq!(x, 1.5); 
+
+        ring_buffer.push(100.0);
+        ring_buffer.push(10.0);   
+        let y = ring_buffer.get_frac(2.1);
+        //println!("y: {}", y);
+        assert_eq!(y, 91.00001);    
+        // y - expected.abs() < ESPILSO         
+    }
+
+
+
+
 }

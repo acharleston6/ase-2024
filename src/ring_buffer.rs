@@ -230,7 +230,4 @@ mod tests {
         // y - expected.abs() < ESPILSO         
     }
 
-
-
-
 }
